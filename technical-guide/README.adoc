@@ -326,11 +326,3 @@ vm.min_free_kbytes=1048576
 vm.dirty_background_bytes=107374182
 ----
 
-## Security
-
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
-## License
-
-This library is licensed under the MIT-0 License. See the LICENSE file.
-
