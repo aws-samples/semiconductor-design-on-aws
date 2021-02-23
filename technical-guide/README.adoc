@@ -1,0 +1,336 @@
+:toc:       macro
+
+# Semiconductor Design on AWS
+
+toc::[]
+
+# Optimizing Semiconductor Design Tools and Applications on AWS
+
+Chip design software tools are critical for modern semiconductor design and verification. Increasing the performance of EDA software—measured both as a function of individual job run times and on the completion time for a complete set of EDA jobs—is important to reduce time-to-results/time-to-tapeout, and to optimize EDA license costs.
+
+To this point, we have covered the solution components for your architecture on AWS. Now, in an effort to be more prescriptive, we present specific recommendations and configuration parameters that should help you achieve expected performance for your EDA tools.
+
+Choosing the right Amazon EC2 instance type and the right OS level optimizations is critical for EDA tools to perform well. This section provides a set of recommendations that are based on actual daily use of EDA software tools on AWS—usage by AWS customers and by Amazon internal silicon design teams. The recommendations include such factors as instance type and configuration, as well as OS recommendations and other tunings for a representative set of EDA tools. These recommendations have been tested and validated internally at AWS and with EDA customers and vendors.
+
+### Amazon EC2 Instance Types
+
+The following table highlights EDA tools and provides corresponding Amazon EC2 instance type recommendations.
+
+.Chip Design tools and corresponding instance type:
+[source, adoc, options="header"]
+|=======================
+|Name| Max Cores| Clock(GHz)| Max RAM in GiB and (GiB/core)| Local NVMe | Design Tool or Application
+|Z1d | 24        | 4.0       | 384 (16)                     | Yes
+a|
+* Formal verification
+* RTL Simulation Batch
+* RTL Simulation Interactive
+* RTL Gate Level Simulation
+| R5 | 48        | 3.1       | 768 (16)                     | Yes**
+a|
+* RTL Simulation Multi-Threaded
+|M5  | 48        | 3.1*      | 384 (16)                     | Yes**
+a|
+* Remote Desktop Sessions
+|C5  | 36        | 3.5*      | 144 (4)                      | Yes**
+a|
+* RTL Simulation Interactive
+* RTL Gate Level Simulation
+|X1	 | 64        | 2.3       | 1,952 (30.5)                 | Yes
+a|
+* Place & Route
+* Static Timing Analysis
+|X1e | 64        | 2.3       | 3,904 (61)                   | Yes
+a|
+* Place & Route
+* Static Timing Analysis
+|=======================
+++*++ Supports up to this clock speed +
+++**++ Supported on disk variant (e.g., R5d, C5d, etc.)
+
+.**vCPU info**:
+NOTE: AWS uses vCPU (which is an Intel Hyper-Thread) to denote processors. This table uses physical cores.
+
+
+### Operating System Optimization
+
+After you have chosen the instance types for your EDA tools, you need to customize and optimize your OS to maximize performance.
+
+#### Use a Current Generation Operating System
+
+If you are running a Nitro based instance, you need to use certain operating system levels. If you run a Xen based instance instead, you should still use one of these OS levels for EDA workloads (specifically required for ENA and NVMe drivers):
+
+* Amazon Linux or Amazon Linux 2
+* CentOS 7.4 or 7.5
+* Red Hat Enterprise Linux 7.4 or 7.5
+
+#### Disable Hyper-Threading
+
+On current generation Amazon EC2 instance families (other than the T2 instance family), AWS instances have Intel Hyper-Threading Technology (HT Technology) enabled by default. You can disable HT Technology if you determine that it has a negative impact on your application’s performance.
+You can run this command to get detailed information about each core (physical core and Hyper-Thread):
+
+
+[source,bash]
+$ cat /proc/cpuinfo
+
+To view cores and the corresponding online Hyper-Threads, use the ```lscpu --extended``` command. For example, consider the Z1d.2xlarge, which has 4 cores with 8 total Hyper-Threads. If you run the ```lscpu --extended``` command before and after disabling Hyper-Threading, you can see which threads are online and offline:
+
+[source,bash]
+----
+$ lscpu --extended
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE
+0   0    0      0    0:0:0:0       yes
+1   0    0      1    1:1:1:0       yes
+2   0    0      2    2:2:2:0       yes
+3   0    0      3    3:3:3:0       yes
+4   0    0      0    0:0:0:0       yes
+5   0    0      1    1:1:1:0       yes
+6   0    0      2    2:2:2:0       yes
+7   0    0      3    3:3:3:0       yes
+
+$ ./disable_ht.sh
+
+$ lscpu --extended
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE
+0   0    0      0    0:0:0:0       yes
+1   0    0      1    1:1:1:0       yes
+2   0    0      2    2:2:2:0       yes
+3   0    0      3    3:3:3:0       yes
+4   -    -      -    :::           no
+5   -    -      -    :::           no
+6   -    -      -    :::           no
+7   -    -      -    :::           no
+----
+Another way to view the vCPUs pairs (that is, Hyper-Threads) of each core is to view the thread_siblings_list for each core. This list shows two numbers that indicate Hyper-Threads for each core. To view all thread siblings, you can use the following command, or substitute “*” with a CPU number:
+
+[source,bash]
+----
+$ cat/sys/devices/system/cpu/cpu*/topology/thread_siblings_list | sort -un
+0,4
+1,5
+2,6
+3,7
+----
+
+**Disable HT Using the AWS feature - CPU Options**
+
+To disable Hyper-Threading using CPU Options, use the AWS CLI with run-instances and the --cpu-options flag. The following is an example with the Z1d.12xlarge instance:
+
+[source, bash]
+----
+$ aws ec2 run-instances --image-id ami- asdfasdfasdfasdf \
+--instance-type z1d.12xlarge --cpu-options  \
+"CoreCount=24,ThreadsPerCore=1" --key-name My_Key_Name
+----
+
+To verify the CpuOptions were set, use describe-instances:
+[source, bash]
+----
+$ aws ec2 describe-instances --instance-ids i-1234qwer1234qwer
+...
+"CpuOptions": {
+"CoreCount": 24,
+"ThreadsPerCore": 1
+},
+...
+----
+
+**Disable HT on a Running System**
+
+You can run the following script on a Linux instance to disable HT Technology while the system is running. This can be set up to run from an init script so that it applies to any instance when you launch the instance.
+For example:
+[source,bash]
+----
+for cpunum in $(cat/sys/devices/system/cpu/cpu*/topology/thread_siblings_list |  sort -un | cut -s -d, -f2-)
+do
+    echo 0 | sudo tee /sys/devices/system/cpu/cpu${cpunum}/online
+done
+----
+**Disable HT Using the Boot File**
+
+You can also disable HT Technology by setting the Linux kernel to only initialize the first set of threads by setting maxcpus in GRUB to be half of the vCPU count of the instance.
+For example, the maxcpus value for a Z1d.12xlarge instance is 24 to disable Hyper-Threading:
+[source,bash]
+----
+GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0 nvme_core.io_timeout=4294967295 maxcpus=24"
+----
+
+For instructions on how to update the kernel command line, see <<update-kernel, Update the Linux Kernel Command Line.>>
+When you disable HT Technology, it does not change the workload density per server because these tools are demanding on DRAM size and reducing the number of threads only helps as GB/core increases.
+
+#### Change Clocksource to TSC
+
+On previous generation instances that are using the Xen hypervisor, consider updating the clocksource to TSC, as the default is the Xen pvclock (which is in the hypervisor). To avoid communication with the hypervisor and use the CPU clock instead, use tsc as the clocksource.
+The tsc clocksource is not supported on Nitro instances. The default kvm-clock clocksource on these instance types provides similar performance benefits as tsc on previous-generation Xen based instances.
+To change the clocksource on a Xen based instance , run the following command:
+[source,bash]
+----
+$ sudo su -c "echo tsc > /sys/devices/system/cl*/cl*/current_clocksource"
+----
+
+To verify that the clocksource is set to tsc, run the following command:
+[source,bash]
+----
+$ cat /sys/devices/system/cl*/cl*/current_clocksource
+tsc
+----
+
+You set the clock source in the initialization scripts on the instance. You can also verify that the clocksource changed with the dmesg command, as shown below:
+[source,bash]
+----
+$ dmesg | grep clocksource
+...
+clocksource: Switched to clocksource tsc
+----
+
+#### Limiting Deeper C-states (Sleep State)
+
+C-states control the sleep levels that a core may enter when it is inactive. You may want to control C-states to tune your system for latency versus performance. Putting cores to sleep takes time, and although a sleeping core allows more headroom for another core to boost to a higher frequency, it takes time for that sleeping core to wake back up and perform work.
+[source,bash]
+----
+GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8 net.ifnames=0
+biosdevname=0 nvme_core.io_timeout=4294967295 intel_idle.max_cstate=1"
+----
+
+For instructions on how to update the kernel command line, see <<update-kernel, Update the Linux Kernel Command Line>>.
+For more information about Amazon EC2 instance processor states, see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html[Processor State Control for Your EC2 Instance] in the Amazon Elastic Compute Cloud User Guide for Linux Instances.
+
+**Enable Turbo Mode (Processor State) on Xen-Based Instances**
+
+For our current Nitro based instance types, you cannot change turbo mode, as this is already set to the optimized value for each instance.
+If you are running on a Xen based instance that is using an entire socket or multiple sockets (for example, r4.16xlarge, r4.8xlarge, c4.8xlarge) you can take advantage of the turbo frequency boost, especially if you have disabled HT Technology.
+Amazon Linux and Amazon Linux 2 have turbo mode enabled by default, but other distributions may not. To ensure that turbo mode is enabled, run the following command:
+[source,bash]
+----
+sudo su -c "echo 0 > /sys/devices/system/cpu/intel_pstate/no_turbo"
+----
+For more information about Amazon EC2 instance processor states, see the https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html[Processor State Control for Your EC2 Instance] page in the Amazon Elastic Compute Cloud User Guide for Linux Instances.
+
+#### Change to Optimal Spinlock Setting on Xen-Based Instances
+For the instances that are using the Xen hypervisor (not Nitro), you should update the spinlock setting. Amazon Linux, Amazon Linux 2, and other distributions, by default, implement a paravirtualized mode of spinlock that is optimized for low-cost preempting virtual machines (VMs). This can be expensive from a performance perspective because it causes the VM to slow down when running multithreaded with locks. Some EDA tools are not optimized for multi-core and consequently rely heavily on spinlocks. Accordingly, we recommend that EDA customers disable paravirtualized spinlock on EC2 instances.
+To disable the paravirtualized mode of spinlock on a Xen based instance, add xen_nopvspin=1 to the kernel command line in /boot/grub/grub.conf and restart. The following is an example kernel command:
+[source,bash]
+----
+kernel /boot/vmlinuz-4.4.41-36.55.amzn1.x86_64 root=LABEL=/ console=tty1 console=ttyS0 selinux=0 xen_nopvspin=1
+----
+
+[[update-kernel]]
+#### Update the Linux Kernel Command Line
+You can update the Linux kernel command line with either the /etc/default/grub file or the /boot/grub/grub.conf file. To update the Linux kernel with the /etc/default/grub file:
+
+1. Open the /etc/default/grub file:  ```$ sudo vim /etc/default/grub```
+2. Edit the ```GRUB_CMDLINE_LINUX_DEFAULT``` line, and make any necessary changes. For example: +
++
+[source,bash]
+----
+GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0 nvme_core.io_timeout=4294967295 intel_idle.max_cstate=1"
+----
++
+3.	Save the file and exit your editor.
+4.	Run the following command to rebuild the boot configuration.
+$ grub2-mkconfig -o /boot/grub2/grub.cfg
++
+[source,bash]
+----
+$ grub2-mkconfig -o /boot/grub2/grub.cfg
+----
++
+5.	Reboot your instance to enable the new kernel option.
+
+To update the Linux kernel with the /boot/grub/grub.conf file:
+
+1.	Open the /boot/grub/grub.conf file.
++
+[source,bash]
+----
+$ sudo vim /boot/grub/grub.conf
+----
++
+2.	Edit the kernel line. For example:
++
+[source,bash]
+----
+# created by imagebuilder
+default=0
+timeout=1
+hiddenmenu
+title Amazon Linux 2014.09 (3.14.26-24.46.amzn1.x86_64)
+root (hd0,0)
+kernel /boot/vmlinuz-ver.amzn1.x86_64 <other_info> intel_idle.max_cstate=1
+initrd /boot/initramfs-3.14.26-24.46.amzn1.x86_64.img
+----
++
+3.	Save the file and exit your editor.
+4.	Reboot your instance to enable the new kernel option.
+
+**Verify the Kernel Line**
+
+After you update the kernel, you can verify the setting by running dmesg or /proc/cmdline at the kernel command line:
+[source,bash]
+----
+$ dmesg | grep "Kernel command line"
+[    0.000000] Kernel command line: root=LABEL=/ console=tty1 console=ttyS0 maxcpus=18 xen_nopvspin=1
+
+$ cat /proc/cmdline
+root=LABEL=/ console=tty1 console=ttyS0 maxcpus=18 xen_nopvspin=1
+----
+
+### Networking
+
+#### AWS Enhanced Networking
+
+Make sure to use enhanced networking for all instances, which is a requirement for launching our current Nitro based instances. For more information about enhanced networking, including build and install instructions, see the https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking.html[Enhanced Networking on Linux] page in the Amazon Elastic Compute Cloud User Guide for Linux Instances.
+
+**Cluster Placement Groups**
+
+A cluster placement group is a logical grouping of instances within a single Availability Zone. Cluster placement groups provide non-blocking, non-oversubscribed, fully bisectional connectivity. In other words, all instances within the placement group can communicate with all other nodes within the placement group at the full line rate of 10 Gpbs flows and 25 Gpbs aggregate without any slowing due to over-subscription. For more information about placement groups, see the https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html[Placement Groups] page in the Amazon Elastic Compute Cloud User Guide for Linux Instances.
+
+**Verify Network Bandwidth**
+
+One method to ensure you are configuring ENA correctly is to benchmark the instance to instance network performance with iperf3. For more information, see this guide on https://aws.amazon.com/premiumsupport/knowledge-center/network-throughput-benchmark-linux-ec2/[How to benchmark network throughput between Amazon EC2 instances].
+
+### Storage
+
+**Amazon EBS Optimization**
+
+Make sure to choose your instance and EBS volumes to suit the storage requirements for your workloads. Each EC2 instance type has an associated EBS limit, and each EBS volume type has limits as well. For example, the m4.16xlarge instance type has a io1 volume type with a maximum throughput of 500MB/s.
+
+**NFS Configuration and Optimization**
+
+Prior to setting up an NFS server on AWS, you need to enable Amazon EC2 enhanced networking. We recommend using Amazon Linux 2 for your NFS server AMI.
+A crucial part of high performing NFS are the mount parameters on the client. For example:
+[source,bash]
+----
+rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
+----
+
+A typical EFS mount command is shown in following example:
+[source,bash]
+----
+$ sudo mount -t nfs4 –o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
+file-system-id.efs.aws-region.amazonaws.com:/ /efs-mount-point
+----
+When you build an NFS server in the AWS Cloud, choose the correct instance size and number of EBS volumes. In a single family, larger instances typically have more network and Amazon EBS bandwidth available to them. The largest NFS servers on AWS are often built using m4.16xlarge instances with multiple EBS volumes striped together in order to achieve the best possible performance.
+
+**Optimizing Storage**
+
+There are many storage options on AWS, some of which have already been mentioned at a high level. Because semiconductor workloads rely on shared storage, building an NFS server is often the first step to running EDA tools.
+The following diagrams show two possible architectures for NFS storage in the AWS Cloud that can achieve suitable performance for most workloads.
+
+### Kernel Virtual Memory
+
+Typical operating system distributions are not tuned for large machines like those offered by AWS for EA workloads. As result, out of the box configurations often have sub-optimal performance settings for kernel network buffers and storage page cache background draining. While the specific numbers may vary by instance size and applications runs, the AWS EDA team has found that these kernel configuration settings and values are a good starting point to optimize memory utilization of the instances:
+[source,bash]
+----
+vm.min_free_kbytes=1048576
+vm.dirty_background_bytes=107374182
+----
+
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+
+## License
+
+This library is licensed under the MIT-0 License. See the LICENSE file.
+
