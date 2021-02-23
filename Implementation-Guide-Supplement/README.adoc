@@ -1,10 +1,10 @@
 :toc:       macro
 
-# Semiconductor Design on AWS
+# Supplemental information to the Implementation Guide
 
 toc::[]
 
-# Optimizing Semiconductor Design Tools and Applications on AWS
+## Optimizing Semiconductor Design Tools and Applications on AWS
 
 Chip design software tools are critical for modern semiconductor design and verification. Increasing the performance of EDA software—measured both as a function of individual job run times and on the completion time for a complete set of EDA jobs—is important to reduce time-to-results/time-to-tapeout, and to optimize EDA license costs.
 
