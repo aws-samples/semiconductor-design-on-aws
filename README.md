@@ -1,11 +1,9 @@
-## My Project
+## Semiconductor Design on AWS 
+Semiconductor and electronics companies can significantly accelerate their product development lifecycle and time to market by taking advantage of the near-infinite compute, storage, and resources available on Amazon Web Services (AWS). 
 
-TODO: Fill this README out!
+Include in this GitHub repository:
+* 
 
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
 
 ## Security
 
