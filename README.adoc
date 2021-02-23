@@ -3,12 +3,12 @@ Semiconductor and electronics companies can significantly accelerate their produ
 
 Included in this GitHub repository:
 
-* https://github.com/aws-samples/semiconductor-design-on-aws/tree/main/Technical-Guide-Supplement[Implementation Guide Supplement]
+* https://github.com/aws-samples/semiconductor-design-on-aws/tree/main/Implementation-Guide-Supplement[Implementation Guide Supplement]
 
 
 ## Security
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+See link:CONTRIBUTING.md[CONTRIBUTING] for more information.
 
 ## License
 
