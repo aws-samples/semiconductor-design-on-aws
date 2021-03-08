@@ -6,46 +6,14 @@ toc::[]
 
 ## Optimizing Semiconductor Design Tools and Applications on AWS
 
-### Amazon EC2 Instance Types
-
-The following table highlights semiconductor design tools and provides corresponding Amazon EC2 instance type recommendations.
-
-[cols="e,m,^,>s",width="25%"]
-|============================
-|1 >s|2 |3 |4
-^|5 2.2+^.^|6 .3+<.>m|7
-^|8
-|9 2+>|10
-|============================
-
-
-[source, adoc, options="header"]
-|============================
-|Name| Max Cores| Clock(GHz)| Max RAM in GiB and (GiB/core)| Local NVMe | Design Tool or Application
-|============================
-
-### Operating System Optimization
-
-After you have chosen the instance types for your EDA tools, you need to customize and optimize your OS to maximize performance.
-
-#### Use a Current Generation Operating System
-
-If you are running a Nitro based instance, you need to use certain operating system levels. If you run a Xen based instance instead, you should still use one of these OS levels for EDA workloads (specifically required for ENA and NVMe drivers):
-
-* Amazon Linux or Amazon Linux 2
-* CentOS 7.5 or newer
-* Red Hat Enterprise Linux 7.5 or newer
-
 #### Disable Hyper-Threading
 
-On current generation Amazon EC2 instance families (other than the T2 instance family), AWS instances have Intel Hyper-Threading Technology (HT Technology) enabled by default. You can disable HT Technology if you determine that it has a negative impact on your application’s performance.
 You can run this command to get detailed information about each core (physical core and Hyper-Thread):
-
 
 [source,bash]
 $ cat /proc/cpuinfo
 
-To view cores and the corresponding online Hyper-Threads, use the ```lscpu --extended``` command. For example, consider the Z1d.2xlarge, which has 4 cores with 8 total Hyper-Threads. If you run the ```lscpu --extended``` command before and after disabling Hyper-Threading, you can see which threads are online and offline:
+If you run the ```lscpu --extended``` command before and after disabling Hyper-Threading, you can see which threads are online and offline:
 
 [source,bash]
 ----
@@ -73,7 +41,7 @@ CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE
 6   -    -      -    :::           no
 7   -    -      -    :::           no
 ----
-Another way to view the vCPUs pairs (that is, Hyper-Threads) of each core is to view the thread_siblings_list for each core. This list shows two numbers that indicate Hyper-Threads for each core. To view all thread siblings, you can use the following command, or substitute “*” with a CPU number:
+To view all thread siblings, you can use the following command, or substitute “*” with a CPU number:
 
 [source,bash]
 ----
@@ -120,7 +88,6 @@ done
 ----
 **Disable HT Using the Boot File**
 
-You can also disable HT Technology by setting the Linux kernel to only initialize the first set of threads by setting maxcpus in GRUB to be half of the vCPU count of the instance.
 For example, the maxcpus value for a Z1d.12xlarge instance is 24 to disable Hyper-Threading:
 [source,bash]
 ----
@@ -128,12 +95,9 @@ GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8 net.ifnames=0 bi
 ----
 
 For instructions on how to update the kernel command line, see <<update-kernel, Update the Linux Kernel Command Line.>>
-When you disable HT Technology, it does not change the workload density per server because these tools are demanding on DRAM size and reducing the number of threads only helps as GB/core increases.
 
 #### Change Clocksource to TSC
 
-On previous generation instances that are using the Xen hypervisor, consider updating the clocksource to TSC, as the default is the Xen pvclock (which is in the hypervisor). To avoid communication with the hypervisor and use the CPU clock instead, use tsc as the clocksource.
-The tsc clocksource is not supported on Nitro instances. The default kvm-clock clocksource on these instance types provides similar performance benefits as tsc on previous-generation Xen based instances.
 To change the clocksource on a Xen based instance , run the following command:
 [source,bash]
 ----
@@ -147,7 +111,7 @@ $ cat /sys/devices/system/cl*/cl*/current_clocksource
 tsc
 ----
 
-You set the clock source in the initialization scripts on the instance. You can also verify that the clocksource changed with the dmesg command, as shown below:
+Verify that the clocksource changed with the dmesg command, as shown below:
 [source,bash]
 ----
 $ dmesg | grep clocksource
@@ -157,7 +121,6 @@ clocksource: Switched to clocksource tsc
 
 #### Limiting Deeper C-states (Sleep State)
 
-C-states control the sleep levels that a core may enter when it is inactive. You may want to control C-states to tune your system for latency versus performance. Putting cores to sleep takes time, and although a sleeping core allows more headroom for another core to boost to a higher frequency, it takes time for that sleeping core to wake back up and perform work.
 [source,bash]
 ----
 GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8 net.ifnames=0
@@ -165,12 +128,9 @@ biosdevname=0 nvme_core.io_timeout=4294967295 intel_idle.max_cstate=1"
 ----
 
 For instructions on how to update the kernel command line, see <<update-kernel, Update the Linux Kernel Command Line>>.
-For more information about Amazon EC2 instance processor states, see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html[Processor State Control for Your EC2 Instance] in the Amazon Elastic Compute Cloud User Guide for Linux Instances.
 
 **Enable Turbo Mode (Processor State) on Xen-Based Instances**
 
-For our current Nitro based instance types, you cannot change turbo mode, as this is already set to the optimized value for each instance.
-If you are running on a Xen based instance that is using an entire socket or multiple sockets (for example, r4.16xlarge, r4.8xlarge, c4.8xlarge) you can take advantage of the turbo frequency boost, especially if you have disabled HT Technology.
 Amazon Linux and Amazon Linux 2 have turbo mode enabled by default, but other distributions may not. To ensure that turbo mode is enabled, run the following command:
 [source,bash]
 ----
@@ -179,7 +139,7 @@ sudo su -c "echo 0 > /sys/devices/system/cpu/intel_pstate/no_turbo"
 For more information about Amazon EC2 instance processor states, see the https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html[Processor State Control for Your EC2 Instance] page in the Amazon Elastic Compute Cloud User Guide for Linux Instances.
 
 #### Change to Optimal Spinlock Setting on Xen-Based Instances
-For the instances that are using the Xen hypervisor (not Nitro), you should update the spinlock setting. Amazon Linux, Amazon Linux 2, and other distributions, by default, implement a paravirtualized mode of spinlock that is optimized for low-cost preempting virtual machines (VMs). This can be expensive from a performance perspective because it causes the VM to slow down when running multithreaded with locks. Some EDA tools are not optimized for multi-core and consequently rely heavily on spinlocks. Accordingly, we recommend that EDA customers disable paravirtualized spinlock on EC2 instances.
+
 To disable the paravirtualized mode of spinlock on a Xen based instance, add xen_nopvspin=1 to the kernel command line in /boot/grub/grub.conf and restart. The following is an example kernel command:
 [source,bash]
 ----
@@ -265,7 +225,7 @@ file-system-id.efs.aws-region.amazonaws.com:/ /efs-mount-point
 
 ### Kernel Virtual Memory
 
-Typical operating system distributions are not tuned for large machines like those offered by AWS for EA workloads. As result, out of the box configurations often have sub-optimal performance settings for kernel network buffers and storage page cache background draining. While the specific numbers may vary by instance size and applications runs, the AWS EDA team has found that these kernel configuration settings and values are a good starting point to optimize memory utilization of the instances:
+A good starting point to optimize memory utilization of the instances:
 [source,bash]
 ----
 vm.min_free_kbytes=1048576
