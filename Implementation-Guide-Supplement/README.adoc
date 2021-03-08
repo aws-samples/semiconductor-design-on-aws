@@ -6,51 +6,23 @@ toc::[]
 
 ## Optimizing Semiconductor Design Tools and Applications on AWS
 
-Chip design software tools are critical for modern semiconductor design and verification. Increasing the performance of EDA software—measured both as a function of individual job run times and on the completion time for a complete set of EDA jobs—is important to reduce time-to-results/time-to-tapeout, and to optimize EDA license costs.
-
-To this point, we have covered the solution components for your architecture on AWS. Now, in an effort to be more prescriptive, we present specific recommendations and configuration parameters that should help you achieve expected performance for your EDA tools.
-
-Choosing the right Amazon EC2 instance type and the right OS level optimizations is critical for EDA tools to perform well. This section provides a set of recommendations that are based on actual daily use of EDA software tools on AWS—usage by AWS customers and by Amazon internal silicon design teams. The recommendations include such factors as instance type and configuration, as well as OS recommendations and other tunings for a representative set of EDA tools. These recommendations have been tested and validated internally at AWS and with EDA customers and vendors.
-
 ### Amazon EC2 Instance Types
 
-The following table highlights EDA tools and provides corresponding Amazon EC2 instance type recommendations.
+The following table highlights semiconductor design tools and provides corresponding Amazon EC2 instance type recommendations.
 
-.Chip Design tools and corresponding instance type:
+[cols="e,m,^,>s",width="25%"]
+|============================
+|1 >s|2 |3 |4
+^|5 2.2+^.^|6 .3+<.>m|7
+^|8
+|9 2+>|10
+|============================
+
+
 [source, adoc, options="header"]
-|=======================
+|============================
 |Name| Max Cores| Clock(GHz)| Max RAM in GiB and (GiB/core)| Local NVMe | Design Tool or Application
-|Z1d | 24        | 4.0       | 384 (16)                     | Yes
-a|
-* Formal verification
-* RTL Simulation Batch
-* RTL Simulation Interactive
-* RTL Gate Level Simulation
-| R5 | 48        | 3.1       | 768 (16)                     | Yes**
-a|
-* RTL Simulation Multi-Threaded
-|M5  | 48        | 3.1*      | 384 (16)                     | Yes**
-a|
-* Remote Desktop Sessions
-|C5  | 36        | 3.5*      | 144 (4)                      | Yes**
-a|
-* RTL Simulation Interactive
-* RTL Gate Level Simulation
-|X1	 | 64        | 2.3       | 1,952 (30.5)                 | Yes
-a|
-* Place & Route
-* Static Timing Analysis
-|X1e | 64        | 2.3       | 3,904 (61)                   | Yes
-a|
-* Place & Route
-* Static Timing Analysis
-|=======================
-++*++ Supports up to this clock speed +
-++**++ Supported on disk variant (e.g., R5d, C5d, etc.)
-
-.**vCPU info**:
-NOTE: AWS uses vCPU (which is an Intel Hyper-Thread) to denote processors. This table uses physical cores.
-
+|============================
 
 ### Operating System Optimization
 
@@ -61,8 +33,8 @@ After you have chosen the instance types for your EDA tools, you need to customi
 If you are running a Nitro based instance, you need to use certain operating system levels. If you run a Xen based instance instead, you should still use one of these OS levels for EDA workloads (specifically required for ENA and NVMe drivers):
 
 * Amazon Linux or Amazon Linux 2
-* CentOS 7.4 or 7.5
-* Red Hat Enterprise Linux 7.4 or 7.5
+* CentOS 7.5 or newer
+* Red Hat Enterprise Linux 7.5 or newer
 
 #### Disable Hyper-Threading
 
@@ -275,26 +247,6 @@ $ cat /proc/cmdline
 root=LABEL=/ console=tty1 console=ttyS0 maxcpus=18 xen_nopvspin=1
 ----
 
-### Networking
-
-#### AWS Enhanced Networking
-
-Make sure to use enhanced networking for all instances, which is a requirement for launching our current Nitro based instances. For more information about enhanced networking, including build and install instructions, see the https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking.html[Enhanced Networking on Linux] page in the Amazon Elastic Compute Cloud User Guide for Linux Instances.
-
-**Cluster Placement Groups**
-
-A cluster placement group is a logical grouping of instances within a single Availability Zone. Cluster placement groups provide non-blocking, non-oversubscribed, fully bisectional connectivity. In other words, all instances within the placement group can communicate with all other nodes within the placement group at the full line rate of 10 Gpbs flows and 25 Gpbs aggregate without any slowing due to over-subscription. For more information about placement groups, see the https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html[Placement Groups] page in the Amazon Elastic Compute Cloud User Guide for Linux Instances.
-
-**Verify Network Bandwidth**
-
-One method to ensure you are configuring ENA correctly is to benchmark the instance to instance network performance with iperf3. For more information, see this guide on https://aws.amazon.com/premiumsupport/knowledge-center/network-throughput-benchmark-linux-ec2/[How to benchmark network throughput between Amazon EC2 instances].
-
-### Storage
-
-**Amazon EBS Optimization**
-
-Make sure to choose your instance and EBS volumes to suit the storage requirements for your workloads. Each EC2 instance type has an associated EBS limit, and each EBS volume type has limits as well. For example, the m4.16xlarge instance type has a io1 volume type with a maximum throughput of 500MB/s.
-
 **NFS Configuration and Optimization**
 
 Prior to setting up an NFS server on AWS, you need to enable Amazon EC2 enhanced networking. We recommend using Amazon Linux 2 for your NFS server AMI.
@@ -310,12 +262,6 @@ A typical EFS mount command is shown in following example:
 $ sudo mount -t nfs4 –o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
 file-system-id.efs.aws-region.amazonaws.com:/ /efs-mount-point
 ----
-When you build an NFS server in the AWS Cloud, choose the correct instance size and number of EBS volumes. In a single family, larger instances typically have more network and Amazon EBS bandwidth available to them. The largest NFS servers on AWS are often built using m4.16xlarge instances with multiple EBS volumes striped together in order to achieve the best possible performance.
-
-**Optimizing Storage**
-
-There are many storage options on AWS, some of which have already been mentioned at a high level. Because semiconductor workloads rely on shared storage, building an NFS server is often the first step to running EDA tools.
-The following diagrams show two possible architectures for NFS storage in the AWS Cloud that can achieve suitable performance for most workloads.
 
 ### Kernel Virtual Memory
 
