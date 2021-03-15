@@ -96,7 +96,7 @@ GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8 net.ifnames=0 bi
 
 For instructions on how to update the kernel command line, see <<update-kernel, Update the Linux Kernel Command Line.>>
 
-#### Change Clocksource to TSC
+#### Change Clocksource to TSC (only for Xen based instances, not for Nitro based instances)
 
 To change the clocksource on a Xen based instance , run the following command:
 [source,bash]
