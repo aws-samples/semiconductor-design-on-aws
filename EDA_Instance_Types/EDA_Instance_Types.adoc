@@ -1,0 +1,85 @@
+
+= EDA Instance Types
+
+Last Update: June 26, 2023
+
+The following table lists instance families recommended to run Electronic Design Automation (EDA) workloads.
+The dollar per core is for relative price comparison between families and is based on On-Demand pricing in the us-east-1 region and can vary per region and over time.
+
+[%header,cols="1,1,1,1,1,1,1,1"]
+|===
+| Instance Family | Max Cores | Max Memory (GB) | GB/Core | Max Freq (GHz) | Max SSD | $/Core* | CPU Type
+
+| Compute Optimized | | | | | | |
+
+| c6g    |  64 |  128 | 2 | 2.5 |      0 | 0.0340 | AWS Graviton 2
+
+| c7g    |  64 |  128 | 2 | 2.6 |      0 | 0.0361 |AWS Graviton 3
+
+| c6a    |  96 |  384 | 4 | 3.6 |      0 | 0.0765 | AMD EPYC 7R13 Milan
+
+| c6i    |  64 |  256 | 4 | 3.5 |      0 | 0.0850 | Intel Xeon 8375C Ice Lake
+
+| c6id   |  64 |  256 | 4 | 3.5 | 4x1900 | 0.1008 | Intel Xeon 8375C Ice Lake
+
+| General Purpose  | | | | | | |
+
+| m6g    |  64 |  256 |  4 | 2.5 |      0 | 0.0385  | AWS Graviton 2
+
+| m6gd   |  64 |  256 |  4 | 2.5 | 2x1900 | 0.0452  | AWS Graviton 2
+
+| m7g    |  64 |  256 |  4 | 2.6 |      0 | 0.0408  | AWS Graviton 3
+
+| m6a    |  96 |  768 |  8 | 3.6 |      0 | 0.0864  | AMD EPYC 7R13 (Milan)
+
+| m6i    |  64 |  512 |  8 | 3.5 |      0 | 0.0960  | Intel Xeon 8375C Ice Lake
+
+| m6id   |  64 |  512 |  8 | 3.5 | 4x1900 | 0.11865 | Intel Xeon 8375C Ice Lake
+
+| Memory Optimized  | | | | | | |
+
+| r6g    |  64 |  512 |  8 | 2.5 |      0 | 0.0504  | AWS Graviton 2
+
+| r6gd   |  64 |  512 |  8 | 2.5 | 2x1900 | 0.0576  | AWS Graviton 2
+
+| r7g    |  64 |  512 |  8 | 2.6 |      0 | 0.0536  | AWS Graviton 3
+
+| x2gd   |  64 | 1024 | 16 | 2.5 | 2x1900 | 0.0835  | AWS Graviton 2
+
+| r6a    |  64 | 1024 | 16 | 3.6 |      0 | 0.1134  | AMD EPYC 7R13 (Milan)
+
+| r6i    |  64 | 1024 | 16 | 3.5 |      0 | 0.1260  | Intel Xeon 8375C (Ice Lake)
+
+| r6id   |  64 | 1024 | 16 | 3.5 |      0 | 0.1512  | Intel Xeon 8375C (Ice Lake)
+
+| x2idn  |  64 | 2048 | 32 | 3.5 | 2x1900 | 0.20841 | Intel Xeon 8375C (Ice Lake)
+
+| x2iedn |  64 | 4096 | 64 | 3.5 | 2x1900 | 0.41681 | Intel Xeon 8375C (Ice Lake)
+
+| u-6tb1 | 112 | 6144 | 55 | 2.1 |      0 | 0.41432 | Intel Xeon Scalable (Sky Lake)
+
+| High Frequency  | | | | | | |
+
+| m5zn   |  24 |  192 |  8 | 4.5 |      0 | 0.1652  | Intel Xeon Platinum 8252 (Cascade Lake)
+
+| z1d    |  24 |  384 | 16 | 4.5 | 2x900  | 0.1860  | Intel Xeon Platinum 8151 (Sky Lake)
+
+| x2iezn |  24 | 1536 | 64 | 4.5 |      0 | 0.4170  | Intel Xeon Platinum 8252 (Cascade Lake)
+
+| HPC Optimized | | | | | | |
+
+| hpc7g  |  64 |  128 |  2 | 2.6 |      0 |        | AWS Graviton 3E
+
+| hpc6a  |  48 |  384 |  8 | 3.6 |      0 | 0.0600 | AMD EPYC 7R13 (Milan) us-east-1
+
+| hpc6id |  32 | 1024 | 32 | 3.5 | 4x3800 | 0.1781 | Intel Xeon Scalable (Ice Lake) us-east-1
+
+| Burstable For VDI  | | | | | | |
+
+| t4g    |   8 |   32 |  4 | 2.5 |      0 | 0.0336 | AWS Graviton 2
+
+| t3a    |   4 |   32 |  8 | 2.5 |      0 | 0.0752 | AMD EPYC 7571
+
+| t3     |   4 |   32 |  8 | 3.1 |      0 | 0.0832 | Intel Skylake 8175M or Cascade Lake 8259CL
+
+|===
