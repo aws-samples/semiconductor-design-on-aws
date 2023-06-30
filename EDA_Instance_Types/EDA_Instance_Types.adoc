@@ -3,40 +3,95 @@
 
 Last Update: June 26, 2023
 
+A key advantage of running EDA workloads on the cloud is the ability to match the compute to specific job requirements.
+The key job attributes to consider are:
+
+  * Purchase option (spot or on demand)
+  * Number of cores
+  * Max memory used
+  * CPU architecture (arm or x86)
+  * Performance
+  * Cost
+
+This first consideration is whether the job can run on spot instances.
+Spot instances are excess EC2 capacity that are must less expensive than on-demand instances with the
+caveat that the instance can be reclaimed with a two minute warning.
+If the job is fault tolerant or can tolerate being rerun then it is a good candidate for spot.
+Examples are short running simulation jobs or regression jobs that aren't latency critical.
+
+AWS instance families are mainly grouped by the amount of memory per core so the job's memory to core ratio
+helps narrow down the best instance families for the job.
+Your candidates will be the smallest instance types in the families that satisfy the memory and core requirements
+of the job.
+For example, if the job is a simulation job that only requires one core and 2 GB of memory, then
+The compute optimized (C) instances, with 2 GB per vCpu, are probably your best option.
+The general purpose (M) instances have 4 GB per vCPU, the memory optimized (R) instances have 8 GB per vCPU,
+and the memory optimized (X) instances have 16 or 32 GB per vCPU.
+For jobs that require more than 4 TB of memory, AWS has the high memory (U) family of instances with from 3 TB up to 24 TB of memory.
+Be aware that the U instances use a slow 2.1 GHz Intel Sky Lake processor
+so you might consider an instance type with a faster processor, less memory, and a large virtual memory;
+the performance impact of memory paging may be offset by the faster processor.
+
+The CPU architectures supported by the application narrow down the choices further.
+All EDA applications support x86 and many now also support the ARM architecture used by the AWS Graviton instances.
+The low cost and high performance of Graviton instances should make them a preferred choice when supported by the application.
+If your application supports the ARM architecture then you should consider them for your job.
+AWS offers x86 instances that use the latest Intel and AMD processors.
+The latest AMD instance are competitive in performance with Intel instances and are typically less expensive.
+You should benchmark your applications on Graviton, AMD, and Intel instances so that you can select
+the best architecture to optimize for performance and/or price.
+A final note is that x86 processors support symmetric multi-threading (SMT) and have 2 vCPUs per core.
+However, most EDA applications are memory limited, not core limited, and run significantly faster with SMT disabled.
+Because of this the table below lists the number of cores, not the number of vCPUs, which is half the number of vCPUs
+for x86 instances.
+
+The final selection criteria helps you optimize for job cost or performance and sometimes allows you to optimize for both.
+In some cases, running on the fastest, most expensive instance type may also minimize the job cost.
+This is because the cost of running a job includes the following costs:
+
+* EDA license
+* Compute
+
+License cost is usually 4 to 20 times more expensive than the compute cost.
+You can reduce the license cost attributed to the job by running on a more expensive, higher performance instance type,
+such as the high frequency instances, because the job will finish faster.
+If the license cost reduction is greater than the increase in compute cost then the job cost will be lower and will finish faster.
+If performance and the shortest job duration is more critical than cost, then you should choose the highest performance
+instance type.
+The AWS high frequency instances such as the m5zn, z1d, x2iezn, and the soon to be available r7iz run at frequencies
+up to 4.5 GHz and provide the highest performance available on AWS.
+
+An AWS optimized scheduler can automatically select the best instance type to use based on the job attributes.
+For example, you could use the AWS ParallelCluster to create a Slurm cluster to run your jobs.
+A job submission would look like:
+
+    sbatch -c 1 --mem 5 GB -C 'hifreq&(spot|ondemand)' -l my-eda-license my-eda-job
+
+This would result in your job running on the lowest cost high frequency instance that has one core and 5 GB of memory using either spot
+or on-demand pricing.
+
 The following table lists instance families recommended to run Electronic Design Automation (EDA) workloads.
+
+With the exception of the HPC instance families, instance families consist of a range of instance types
+with from 1 core to the maximum number of cores in the family.
+The HPC instances come in only one size and do not support spot pricing, but their on-demand pricing is significantly lower than
+comparable non-HPC instances.
+They are also only available in certain AZs in a limited number of regions.
 The dollar per core is for relative price comparison between families and is based on On-Demand pricing in the us-east-1 region and can vary per region and over time.
 
 [%header,cols="1,1,1,1,1,1,1,1"]
 |===
 | Instance Family | Max Cores | Max Memory (GB) | GB/Core | Max Freq (GHz) | Max SSD | $/Core* | CPU Type
 
-| Compute Optimized | | | | | | |
+| High Frequency - preferred for EDA to reduce license costs | | | | | | |
 
-| c6g    |  64 |  128 | 2 | 2.5 |      0 | 0.0340 | AWS Graviton 2
+| m5zn   |  24 |  192 |  8 | 4.5 |      0 | 0.1652  | Intel Xeon Platinum 8252 (Cascade Lake)
 
-| c7g    |  64 |  128 | 2 | 2.6 |      0 | 0.0361 |AWS Graviton 3
+| z1d    |  24 |  384 | 16 | 4.5 | 2x900  | 0.1860  | Intel Xeon Platinum 8151 (Sky Lake)
 
-| c6a    |  96 |  384 | 4 | 3.6 |      0 | 0.0765 | AMD EPYC 7R13 Milan
+| x2iezn |  24 | 1536 | 64 | 4.5 |      0 | 0.4170  | Intel Xeon Platinum 8252 (Cascade Lake)
 
-| c6i    |  64 |  256 | 4 | 3.5 |      0 | 0.0850 | Intel Xeon 8375C Ice Lake
-
-| c6id   |  64 |  256 | 4 | 3.5 | 4x1900 | 0.1008 | Intel Xeon 8375C Ice Lake
-
-| General Purpose  | | | | | | |
-
-| m6g    |  64 |  256 |  4 | 2.5 |      0 | 0.0385  | AWS Graviton 2
-
-| m6gd   |  64 |  256 |  4 | 2.5 | 2x1900 | 0.0452  | AWS Graviton 2
-
-| m7g    |  64 |  256 |  4 | 2.6 |      0 | 0.0408  | AWS Graviton 3
-
-| m6a    |  96 |  768 |  8 | 3.6 |      0 | 0.0864  | AMD EPYC 7R13 (Milan)
-
-| m6i    |  64 |  512 |  8 | 3.5 |      0 | 0.0960  | Intel Xeon 8375C Ice Lake
-
-| m6id   |  64 |  512 |  8 | 3.5 | 4x1900 | 0.11865 | Intel Xeon 8375C Ice Lake
-
-| Memory Optimized  | | | | | | |
+| Memory Optimized - for memory limited applications | | | | | | |
 
 | r6g    |  64 |  512 |  8 | 2.5 |      0 | 0.0504  | AWS Graviton 2
 
@@ -58,13 +113,31 @@ The dollar per core is for relative price comparison between families and is bas
 
 | u-6tb1 | 112 | 6144 | 55 | 2.1 |      0 | 0.41432 | Intel Xeon Scalable (Sky Lake)
 
-| High Frequency  | | | | | | |
+| Compute Optimized | | | | | | |
 
-| m5zn   |  24 |  192 |  8 | 4.5 |      0 | 0.1652  | Intel Xeon Platinum 8252 (Cascade Lake)
+| c6g    |  64 |  128 | 2 | 2.5 |      0 | 0.0340 | AWS Graviton 2
 
-| z1d    |  24 |  384 | 16 | 4.5 | 2x900  | 0.1860  | Intel Xeon Platinum 8151 (Sky Lake)
+| c7g    |  64 |  128 | 2 | 2.6 |      0 | 0.0361 | AWS Graviton 3
 
-| x2iezn |  24 | 1536 | 64 | 4.5 |      0 | 0.4170  | Intel Xeon Platinum 8252 (Cascade Lake)
+| c6a    |  96 |  384 | 4 | 3.6 |      0 | 0.0765 | AMD EPYC 7R13 Milan
+
+| c6i    |  64 |  256 | 4 | 3.5 |      0 | 0.0850 | Intel Xeon 8375C Ice Lake
+
+| c6id   |  64 |  256 | 4 | 3.5 | 4x1900 | 0.1008 | Intel Xeon 8375C Ice Lake
+
+| General Purpose  | | | | | | |
+
+| m6g    |  64 |  256 |  4 | 2.5 |      0 | 0.0385  | AWS Graviton 2
+
+| m6gd   |  64 |  256 |  4 | 2.5 | 2x1900 | 0.0452  | AWS Graviton 2
+
+| m7g    |  64 |  256 |  4 | 2.6 |      0 | 0.0408  | AWS Graviton 3
+
+| m6a    |  96 |  768 |  8 | 3.6 |      0 | 0.0864  | AMD EPYC 7R13 (Milan)
+
+| m6i    |  64 |  512 |  8 | 3.5 |      0 | 0.0960  | Intel Xeon 8375C Ice Lake
+
+| m6id   |  64 |  512 |  8 | 3.5 | 4x1900 | 0.11865 | Intel Xeon 8375C Ice Lake
 
 | HPC Optimized | | | | | | |
 
@@ -74,7 +147,7 @@ The dollar per core is for relative price comparison between families and is bas
 
 | hpc6id |  32 | 1024 | 32 | 3.5 | 4x3800 | 0.1781 | Intel Xeon Scalable (Ice Lake) us-east-1
 
-| Burstable For VDI  | | | | | | |
+| Burstable - for VDI  | | | | | | |
 
 | t4g    |   8 |   32 |  4 | 2.5 |      0 | 0.0336 | AWS Graviton 2
 
