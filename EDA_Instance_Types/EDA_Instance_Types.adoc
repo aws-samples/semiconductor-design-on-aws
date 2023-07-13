@@ -14,17 +14,18 @@ The key job attributes to consider are:
   * Cost
 
 This first consideration is whether the job can run on spot instances.
-Spot instances are excess EC2 capacity that are must less expensive than on-demand instances with the
+Spot instances are excess EC2 capacity that are much less expensive than on-demand instances with the
 caveat that the instance can be reclaimed with a two minute warning.
 If the job is fault tolerant or can tolerate being rerun then it is a good candidate for spot.
 Examples are short running simulation jobs or regression jobs that aren't latency critical.
+Bad candidates are long-running jobs where job interruptions would be very costly.
 
 AWS instance families are mainly grouped by the amount of memory per core so the job's memory to core ratio
 helps narrow down the best instance families for the job.
 Your candidates will be the smallest instance types in the families that satisfy the memory and core requirements
 of the job.
 For example, if the job is a simulation job that only requires one core and 2 GB of memory, then
-The compute optimized (C) instances, with 2 GB per vCpu, are probably your best option.
+the compute optimized ( C  ) instances, with 2 GB per vCpu, are probably your best option.
 The general purpose (M) instances have 4 GB per vCPU, the memory optimized (R) instances have 8 GB per vCPU,
 and the memory optimized (X) instances have 16 or 32 GB per vCPU.
 For jobs that require more than 4 TB of memory, AWS has the high memory (U) family of instances with from 3 TB up to 24 TB of memory.
