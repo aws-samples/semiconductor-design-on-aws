@@ -13,7 +13,7 @@ The key job attributes to consider are:
   * Performance
   * Cost
 
-This first consideration is whether the job can run on spot instances.
+The first consideration is whether the job can run on spot instances.
 Spot instances are excess EC2 capacity that are much less expensive than on-demand instances with the
 caveat that the instance can be reclaimed with a two minute warning.
 If the job is fault tolerant or can tolerate being rerun then it is a good candidate for spot.
@@ -25,10 +25,10 @@ helps narrow down the best instance families for the job.
 Your candidates will be the smallest instance types in the families that satisfy the memory and core requirements
 of the job.
 For example, if the job is a simulation job that only requires one core and 2 GB of memory, then
-the compute optimized ( C  ) instances, with 2 GB per vCpu, are probably your best option.
-The general purpose (M) instances have 4 GB per vCPU, the memory optimized (R) instances have 8 GB per vCPU,
-and the memory optimized (X) instances have 16 or 32 GB per vCPU.
-For jobs that require more than 4 TB of memory, AWS has the high memory (U) family of instances with from 3 TB up to 24 TB of memory.
+the compute optimized ( C ) instances, with 2 GB per vCpu, are probably your best option.
+The general purpose ( M ) instances have 4 GB per vCPU, the memory optimized ( R ) instances have 8 GB per vCPU,
+and the memory optimized ( X ) instances have 16 or 32 GB per vCPU.
+For jobs that require more than 4 TB of memory, AWS has the high memory ( U ) family of instances with from 3 TB up to 24 TB of memory.
 Be aware that the U instances use a slow 2.1 GHz Intel Sky Lake processor
 so you might consider an instance type with a faster processor, less memory, and a large virtual memory;
 the performance impact of memory paging may be offset by the faster processor.
@@ -43,14 +43,14 @@ You should benchmark your applications on Graviton, AMD, and Intel instances so 
 the best architecture to optimize for performance and/or price.
 A final note is that x86 processors support symmetric multi-threading (SMT) and have 2 vCPUs per core.
 However, most EDA applications are memory limited, not core limited, and run significantly faster with SMT disabled.
-Because of this the table below lists the number of cores, not the number of vCPUs, which is half the number of vCPUs
+Because of this, the table below lists the number of cores, not the number of vCPUs, which is half the number of vCPUs
 for x86 instances.
 
 The final selection criteria helps you optimize for job cost or performance and sometimes allows you to optimize for both.
 In some cases, running on the fastest, most expensive instance type may also minimize the job cost.
 This is because the cost of running a job includes the following costs:
 
-* EDA license
+* EDA license(s)
 * Compute
 
 License cost is usually 4 to 20 times more expensive than the compute cost.
@@ -72,7 +72,6 @@ This would result in your job running on the lowest cost high frequency instance
 or on-demand pricing.
 
 The following table lists instance families recommended to run Electronic Design Automation (EDA) workloads.
-
 With the exception of the HPC instance families, instance families consist of a range of instance types
 with from 1 core to the maximum number of cores in the family.
 The HPC instances come in only one size and do not support spot pricing, but their on-demand pricing is significantly lower than
