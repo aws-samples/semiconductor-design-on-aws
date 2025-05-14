@@ -90,21 +90,29 @@ Pricing can per region and over time.
 
 | m5zn   |  24 |  192 |  8 | 4.5 |      0 | 0.1652  | Intel Xeon Platinum 8252 (Cascade Lake)
 
-| r7iz   |  64 | 1024 | 16 | 3.9 |      0 | 0.1860 | Intel Xeon 6455B (Sapphire Rapids) (us-east-1)
+| r7iz   |  64 | 1024 | 16 | 3.9 |      0 | 0.1860 | Intel Xeon 6455B (Sapphire Rapids)
 
-| z1d    |  24 |  384 | 16 | 4.5 | 2x900  | 0.1860  | Intel Xeon Platinum 8151 (Sky Lake)
+| z1d    |  24 |  384 | 16 | 4.5 |  2x900 | 0.1860  | Intel Xeon Platinum 8151 (Sky Lake)
 
 | x2iezn |  24 | 1536 | 64 | 4.5 |      0 | 0.4170  | Intel Xeon Platinum 8252 (Cascade Lake)
 
 8+h| **Memory Optimized - for memory limited applications**
 
+| r8g    | 192 | 1536 |  8 | 2.8 |      0 | 0.0589  | AWS Graviton 4
+
+| r8gd   | 192 | 1536 |  8 | 2.8 | 6x1900 | 0.0735  | AWS Graviton 4
+
 | r7g    |  64 |  512 |  8 | 2.6 |      0 | 0.0536  | AWS Graviton 3
 
 | r7gd   |  64 |  512 |  8 | 2.6 | 2x1900 | 0.0680  | AWS Graviton 3
 
+| x8g    | 192 | 3072 | 16 | 2.8 |      0 | 0.0977  | AWS Graviton 4
+
 | x2gd   |  64 | 1024 | 16 | 2.5 | 2x1900 | 0.0835  | AWS Graviton 2
 
-| r7a    |  96 | 1536 | 16 | 3.7 |      0 | 0.15215 | AMD EPYC 9R14 (Genoa)
+| r7a    | 192 | 1536 | 8  | 3.7 |      0 | 0.0761 | AMD EPYC 9R14 (Genoa)
+
+| r7i    |  96 | 1536 | 16 | 3.2 |      0 | 0.1323 | Intel Xeon 8488C (Sapphire Rapids)
 
 | r6i    |  64 | 1024 | 16 | 3.5 |      0 | 0.1260  | Intel Xeon 8375C (Ice Lake)
 
@@ -128,25 +136,33 @@ Pricing can per region and over time.
 
 8+h| **Compute Optimized**
 
+| c8g    | 192 |  384 |  2 | 2.8 |      0 | 0.0399  | AWS Graviton 4
+
+| c8gd   | 192 |  384 |  2 | 2.8 | 6x1900 | 0.0490  | AWS Graviton 4
+
 | c7g    |  64 |  128 |  2 | 2.6 |      0 | 0.0361  | AWS Graviton 3
 
 | c7gd   |  64 |  128 |  2 | 2.6 | 2x1900 | 0.0454  | AWS Graviton 3
 
 | c7gn   |  64 |  128 |  2 | 2.6 |      0 | 0.0624  | AWS Graviton 3
 
-| c7a    |  96 |  384 |  4 | 3.7 |      0 | 0.10264 | AMD EPYC 9R14 (Genoa)
+| c7a    | 192 |  384 |  2 | 3.7 |      0 | 0.0513  | AMD EPYC 9R14 (Genoa)
 
-| c7i    |  96 |  384 |  4 | 3.2 |      0 | 0.08925 | Intel Xeon 8488 (Sapphire Rapids)
+| c7i    |  96 |  384 |  4 | 3.2 |      0 | 0.08925 | Intel Xeon 8488C (Sapphire Rapids)
 
 8+h| **General Purpose**
+
+| m8g    | 192 |  768 |  4 | 2.8 |      0 | 0.0449  | AWS Graviton 4
+
+| m8gd   | 192 |  768 |  4 | 2.8 | 2x1900 | 0.0577  | AWS Graviton 4
 
 | m7g    |  64 |  256 |  4 | 2.6 |      0 | 0.0408  | AWS Graviton 3
 
 | m7gd   |  64 |  256 |  4 | 2.6 | 2x1900 | 0.0534  | AWS Graviton 3
 
-| m7a    |  96 |  768 |  8 | 3.7 |      0 | 0.11592 | AMD EPYC 9R14 (Genoa)
+| m7a    | 192 |  768 |  4 | 3.7 |      0 | 0.0580  | AMD EPYC 9R14 (Genoa)
 
-| m7i    |  96 |  512 |  8 | 3.2 |      0 | 0.1008  | Intel Xeon 8488 (Sapphire Rapids)
+| m7i    |  96 |  512 |  8 | 3.2 |      0 | 0.1008  | Intel Xeon 8488C (Sapphire Rapids)
 
 8+h| **HPC Optimized**
 
@@ -157,6 +173,8 @@ Pricing can per region and over time.
 | hpc6id |  32 | 1024 | 32 | 3.5 | 4x3800 | 0.1781 | Intel Xeon Scalable (Ice Lake)
 
 8+h| **Burstable - for VDI and Interactive Work**
+
+|c7i-flex|  32 |  128 |  4 | 3.2 |      0 | 0.0848 | Intel Xeon 8488C (Sapphire Rapids)
 
 | t4g    |   8 |   32 |  4 | 2.5 |      0 | 0.0336 | AWS Graviton 2
 

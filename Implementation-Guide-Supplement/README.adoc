@@ -81,7 +81,7 @@ You can run the following script on a Linux instance to disable HT Technology wh
 For example:
 [source,bash]
 ----
-for cpunum in $(cat/sys/devices/system/cpu/cpu*/topology/thread_siblings_list |  sort -un | cut -s -d, -f2-)
+for cpunum in $(awk -F'[,-]' '{print $2}' /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | sort -un);
 do
     echo 0 | sudo tee /sys/devices/system/cpu/cpu${cpunum}/online
 done
