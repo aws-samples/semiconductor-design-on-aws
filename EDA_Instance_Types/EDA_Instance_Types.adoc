@@ -1,7 +1,7 @@
 
 = EDA Instance Types
 
-Last Update: October 11, 2023
+Last Update: May 13, 2025
 
 A key advantage of running EDA workloads on the cloud is the ability to match the compute to specific job requirements.
 The key job attributes to consider are:
